@@ -92,12 +92,9 @@ const App: React.FC = () => {
         const metadata = extractMetadata(text);
         
         if (metadata) {
-          // If metadata exists, try to restore library even if we don't restore project
           if (metadata.savedPalettes && Array.isArray(metadata.savedPalettes)) {
             incomingLibraryPalettes.push(...metadata.savedPalettes);
           }
-
-          // Restore project state if we haven't found one yet
           if (!projectMetadataFound && metadata.svgData && metadata.colorOptions) {
             setSvgData(metadata.svgData);
             setColorOptions(metadata.colorOptions);
@@ -107,7 +104,6 @@ const App: React.FC = () => {
             projectMetadataFound = true;
           }
         } else {
-          // No metadata, gather for variant collection
           if (!newBaseSvg) {
             newBaseSvg = { content: text, name: file.name };
           } else {
@@ -119,7 +115,6 @@ const App: React.FC = () => {
       }
     }
 
-    // Merge library themes
     if (incomingLibraryPalettes.length > 0) {
       const existingIds = new Set(savedPalettes.map(p => p.id));
       const filteredIncoming = incomingLibraryPalettes.filter(p => !existingIds.has(p.id));
@@ -128,20 +123,16 @@ const App: React.FC = () => {
       }
     }
 
-    // If no project was restored but we have multiple SVGs, create a multi-set project
     if (!projectMetadataFound && newBaseSvg) {
       const baseColors = extractUniqueColors(newBaseSvg.content);
-      
       const options: ColorOption[] = baseColors.map(c => ({
         id: generateId(),
         originalColor: c,
-        replacements: [c] // Set 1 is original
+        replacements: [c]
       }));
 
-      // Add extra sets from other dropped files
       additionalSvgPalettes.forEach(palette => {
         options.forEach((opt, idx) => {
-          // Use color from this palette at same index, or fallback to original
           const replacement = palette[idx] || opt.originalColor;
           opt.replacements.push(replacement);
         });
@@ -200,7 +191,6 @@ const App: React.FC = () => {
         alert("Please upload an SVG first to apply these colors.");
         return;
     }
-
     const newOptions = colorOptions.map(currentOpt => {
       const matchingSaved = palette.colorOptions.find(p => p.originalColor.toUpperCase() === currentOpt.originalColor.toUpperCase());
       if (matchingSaved) {
@@ -208,7 +198,6 @@ const App: React.FC = () => {
       }
       return currentOpt;
     });
-
     setColorOptions(newOptions);
     setCanvasBg(palette.canvasBg);
   };
@@ -230,44 +219,30 @@ const App: React.FC = () => {
 
   const variants = useMemo(() => {
     if (!svgData) return [];
-
-    const metadata = {
-      svgData,
-      colorOptions,
-      canvasBg,
-      savedPalettes, // Bundle library with export
-      v: '5'
-    };
+    const metadata = { svgData, colorOptions, canvasBg, savedPalettes, v: '5' };
 
     if (permutationMode) {
       const replacementArrays = colorOptions.map(opt => Array.from(new Set(opt.replacements)));
       const combinations = cartesianProduct<string>(replacementArrays);
-
       if (combinations.length > MAX_SAFE_VARIANTS) return [];
-
       return combinations.map((combo, idx) => {
         const mapping: ColorMapping = {};
         colorOptions.forEach((opt, i) => { mapping[opt.originalColor] = combo[i]; });
-
         let content = applyColorMapping(svgData.originalContent, mapping);
         if (bakeBg) content = injectBackground(content, canvasBg);
         content = injectMetadata(content, metadata);
-
         return { id: `variant-${idx}`, mapping, svgContent: content };
       });
     } else {
       const maxSets = Math.max(0, ...colorOptions.map(opt => opt.replacements.length));
-      
       return Array.from({ length: maxSets }).map((_, idx) => {
         const mapping: ColorMapping = {};
         colorOptions.forEach(opt => {
           mapping[opt.originalColor] = opt.replacements[idx] || opt.replacements[opt.replacements.length - 1];
         });
-
         let content = applyColorMapping(svgData.originalContent, mapping);
         if (bakeBg) content = injectBackground(content, canvasBg);
         content = injectMetadata(content, metadata);
-
         return { id: `set-${idx}`, mapping, svgContent: content };
       });
     }
@@ -303,7 +278,7 @@ const App: React.FC = () => {
 
   return (
     <div 
-      className={`min-h-screen flex flex-col bg-slate-50 transition-colors duration-300 ${isDragging ? 'bg-indigo-50/50' : ''}`}
+      className={`min-h-screen flex flex-col bg-slate-50 transition-colors duration-300 ${isDragging ? 'bg-blue-50/50' : ''}`}
       onDragOver={onDragOver}
       onDragLeave={onDragLeave}
       onDrop={onDrop}
@@ -313,8 +288,8 @@ const App: React.FC = () => {
       <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
         {restoreSuccess && (
           <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[100] animate-in slide-in-from-top-4 duration-300">
-            <div className="bg-indigo-600 text-white px-6 py-3 rounded-2xl shadow-2xl flex items-center space-x-3 border border-indigo-500/50">
-              <Sparkles className="w-5 h-5 text-indigo-300" />
+            <div className="bg-blue-600 text-white px-6 py-3 rounded-2xl shadow-2xl flex items-center space-x-3 border border-blue-500/50">
+              <Sparkles className="w-5 h-5 text-blue-200" />
               <span className="font-bold uppercase tracking-widest text-xs">Full Project Restored</span>
             </div>
           </div>
@@ -323,10 +298,10 @@ const App: React.FC = () => {
         {!svgData ? (
           <div className="space-y-16 py-12">
             <div 
-              className={`h-[45vh] flex flex-col items-center justify-center border-2 border-dashed rounded-[3rem] bg-white shadow-sm p-12 transition-all duration-300 group ${isDragging ? 'border-indigo-500 bg-indigo-50/20 scale-[1.01]' : 'border-slate-300 hover:border-indigo-400'}`}
+              className={`h-[45vh] flex flex-col items-center justify-center border-2 border-dashed rounded-[3rem] bg-white shadow-sm p-12 transition-all duration-300 group ${isDragging ? 'border-blue-500 bg-blue-50/20 scale-[1.01]' : 'border-slate-300 hover:border-blue-400'}`}
             >
-              <div className={`p-6 rounded-[2rem] mb-6 transition-all duration-300 ${isDragging ? 'bg-indigo-600 scale-110' : 'bg-indigo-50 group-hover:scale-110'}`}>
-                {isDragging ? <FileCode className="w-12 h-12 text-white" /> : <Upload className="w-12 h-12 text-indigo-600" />}
+              <div className={`p-6 rounded-[2rem] mb-6 transition-all duration-300 ${isDragging ? 'bg-blue-600 scale-110' : 'bg-blue-50 group-hover:scale-110'}`}>
+                {isDragging ? <FileCode className="w-12 h-12 text-white" /> : <Upload className="w-12 h-12 text-blue-600" />}
               </div>
               <h2 className="text-3xl font-black text-slate-800 mb-2">
                 {isDragging ? 'Drop to Sync State' : 'Drop your SVG files here'}
@@ -335,10 +310,10 @@ const App: React.FC = () => {
                 Drag exported files to restore all sets and themes, or drop multiple SVGs to create a collection.
               </p>
               <div className="flex items-center space-x-2 mb-8 bg-slate-50 px-4 py-2 rounded-xl border border-slate-100">
-                <Info className="w-4 h-4 text-indigo-500" />
+                <Info className="w-4 h-4 text-blue-500" />
                 <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Library and session autosync included</span>
               </div>
-              <label className="cursor-pointer bg-indigo-600 hover:bg-indigo-700 text-white px-12 py-4 rounded-2xl font-bold transition-all shadow-xl shadow-indigo-100 active:scale-95">
+              <label className="cursor-pointer bg-blue-600 hover:bg-blue-700 text-white px-12 py-4 rounded-2xl font-bold transition-all shadow-xl shadow-blue-100 active:scale-95">
                 Select Files
                 <input type="file" className="hidden" accept=".svg" multiple onChange={handleFileUpload} />
               </label>
@@ -348,7 +323,7 @@ const App: React.FC = () => {
               <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
                 <div className="flex items-center justify-between mb-8">
                   <div className="flex items-center space-x-3">
-                    <div className="bg-indigo-600 p-2 rounded-xl shadow-lg shadow-indigo-200">
+                    <div className="bg-blue-600 p-2 rounded-xl shadow-lg shadow-blue-200">
                        <Bookmark className="w-5 h-5 text-white" />
                     </div>
                     <h2 className="text-2xl font-black text-slate-900 tracking-tight">Saved Themes</h2>
@@ -361,7 +336,7 @@ const App: React.FC = () => {
                     <div 
                       key={palette.id}
                       onClick={() => applySavedPalette(palette)}
-                      className="group cursor-pointer p-6 bg-white border border-slate-200 rounded-[2.5rem] hover:border-indigo-400 hover:shadow-2xl hover:shadow-indigo-500/10 transition-all flex flex-col"
+                      className="group cursor-pointer p-6 bg-white border border-slate-200 rounded-[2.5rem] hover:border-blue-400 hover:shadow-2xl hover:shadow-blue-500/10 transition-all flex flex-col"
                     >
                       <div className="flex justify-between items-start mb-6">
                         <span className="font-black text-slate-800 truncate pr-4 text-lg leading-tight">{palette.name}</span>
@@ -372,7 +347,6 @@ const App: React.FC = () => {
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
-                      
                       <div className="flex -space-x-3 mb-8">
                         {palette.colorOptions.slice(0, 5).map((o, idx) => (
                           <div 
@@ -382,10 +356,9 @@ const App: React.FC = () => {
                           />
                         ))}
                       </div>
-
                       <div className="mt-auto pt-6 border-t border-slate-50 flex items-center justify-between">
                         <span className="text-[10px] text-slate-400 font-black uppercase tracking-widest">{new Date(palette.timestamp).toLocaleDateString()}</span>
-                        <p className="text-[10px] text-indigo-600 font-black uppercase tracking-widest group-hover:translate-x-1 transition-transform">Apply Theme →</p>
+                        <p className="text-[10px] text-blue-600 font-black uppercase tracking-widest group-hover:translate-x-1 transition-transform">Apply Theme →</p>
                       </div>
                     </div>
                   ))}
@@ -395,7 +368,6 @@ const App: React.FC = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-            
             <div className="lg:col-span-4 space-y-6 lg:sticky lg:top-24">
               <div className="bg-white p-6 rounded-[2.5rem] shadow-sm border border-slate-200">
                 <div className="flex items-center justify-between mb-8">
@@ -403,7 +375,7 @@ const App: React.FC = () => {
                   <div className="flex space-x-2">
                     <button 
                       onClick={saveCurrentPalette}
-                      className={`p-2.5 flex items-center space-x-2 text-[10px] font-black uppercase tracking-widest transition-all rounded-xl ${saveSuccess ? 'text-white bg-emerald-500 shadow-lg shadow-emerald-200' : 'text-slate-500 hover:text-indigo-600 hover:bg-indigo-50'}`}
+                      className={`p-2.5 flex items-center space-x-2 text-[10px] font-black uppercase tracking-widest transition-all rounded-xl ${saveSuccess ? 'text-white bg-emerald-500 shadow-lg shadow-emerald-200' : 'text-slate-500 hover:text-blue-600 hover:bg-blue-50'}`}
                     >
                       {saveSuccess ? <CheckCircle2 className="w-4 h-4" /> : <Save className="w-4 h-4" />}
                       <span>{saveSuccess ? 'Saved' : 'Save Theme'}</span>
@@ -421,20 +393,19 @@ const App: React.FC = () => {
                 <div className="space-y-4 mb-8">
                   <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex items-center justify-between">
                     <div className="flex items-center space-x-3">
-                      <Shuffle className="w-4 h-4 text-indigo-500" />
+                      <Shuffle className="w-4 h-4 text-blue-500" />
                       <span className="text-xs font-black uppercase tracking-widest text-slate-700">Permutations</span>
                     </div>
                     <button 
                       onClick={() => setPermutationMode(!permutationMode)}
-                      className={`w-10 h-6 rounded-full relative transition-all ${permutationMode ? 'bg-indigo-600 shadow-inner' : 'bg-slate-300'}`}
+                      className={`w-10 h-6 rounded-full relative transition-all ${permutationMode ? 'bg-blue-600 shadow-inner' : 'bg-slate-300'}`}
                     >
                       <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${permutationMode ? 'translate-x-5' : 'translate-x-1'}`} />
                     </button>
                   </div>
-
                   <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex items-center justify-between">
                     <div className="flex items-center space-x-3">
-                      <Box className="w-4 h-4 text-indigo-500" />
+                      <Box className="w-4 h-4 text-blue-500" />
                       <span className="text-xs font-black uppercase tracking-widest text-slate-700">Canvas</span>
                     </div>
                     <ColorPicker value={canvasBg} onChange={setCanvasBg} />
@@ -453,7 +424,7 @@ const App: React.FC = () => {
                   <button 
                     onClick={downloadAll}
                     disabled={tooManyVariants || variants.length === 0}
-                    className="w-full bg-slate-900 hover:bg-indigo-600 disabled:bg-slate-200 disabled:cursor-not-allowed text-white py-5 px-4 rounded-2xl font-black uppercase tracking-widest flex items-center justify-center space-x-3 transition-all shadow-xl shadow-slate-100 active:scale-95"
+                    className="w-full bg-slate-900 hover:bg-blue-600 disabled:bg-slate-200 disabled:cursor-not-allowed text-white py-5 px-4 rounded-2xl font-black uppercase tracking-widest flex items-center justify-center space-x-3 transition-all shadow-xl shadow-slate-100 active:scale-95"
                   >
                     <Download className="w-5 h-5" />
                     <span>Download Bundle</span>
@@ -464,7 +435,7 @@ const App: React.FC = () => {
             </div>
 
             <div className="lg:col-span-8">
-              <div className={`bg-white p-10 rounded-[3rem] shadow-sm border transition-all duration-300 min-h-[70vh] ${isDragging ? 'border-indigo-500 ring-4 ring-indigo-500/10' : 'border-slate-200'}`}>
+              <div className={`bg-white p-10 rounded-[3rem] shadow-sm border transition-all duration-300 min-h-[70vh] ${isDragging ? 'border-blue-500 ring-4 ring-blue-500/10' : 'border-slate-200'}`}>
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-12 gap-4">
                   <div>
                     <h2 className="text-3xl font-black text-slate-900 tracking-tighter">
@@ -490,7 +461,7 @@ const App: React.FC = () => {
                     {variants.map((v, i) => (
                       <div 
                         key={v.id} 
-                        className="group bg-slate-50 border border-slate-100 rounded-[3rem] overflow-hidden hover:border-indigo-300 hover:bg-white transition-all hover:shadow-2xl hover:shadow-indigo-500/10 active:scale-[0.98]"
+                        className="group bg-slate-50 border border-slate-100 rounded-[3rem] overflow-hidden hover:border-blue-300 hover:bg-white transition-all hover:shadow-2xl hover:shadow-blue-500/10 active:scale-[0.98]"
                       >
                         <div 
                           className="p-10 flex justify-center items-center min-h-[300px] relative transition-colors"
@@ -498,7 +469,7 @@ const App: React.FC = () => {
                         >
                            <SVGPreview content={v.svgContent} className="max-h-[220px] max-w-full drop-shadow-2xl" />
                            <div className="absolute top-6 left-8">
-                                <span className="text-[11px] font-black text-slate-300 group-hover:text-indigo-400 transition-colors uppercase tracking-widest">
+                                <span className="text-[11px] font-black text-slate-300 group-hover:text-blue-400 transition-colors uppercase tracking-widest">
                                     {permutationMode ? `P-${i + 1}` : `Theme ${i + 1}`}
                                 </span>
                            </div>
@@ -508,7 +479,7 @@ const App: React.FC = () => {
                           <div className="flex space-x-2">
                              <button 
                                 onClick={() => downloadSingle(v.svgContent, `variation-${i+1}`)}
-                                className="p-3 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-2xl transition-all"
+                                className="p-3 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-2xl transition-all"
                                 title="Download"
                              >
                                <Download className="w-5 h-5" />
@@ -518,7 +489,7 @@ const App: React.FC = () => {
                                     navigator.clipboard.writeText(v.svgContent);
                                     alert("SVG code copied.");
                                 }}
-                                className="p-3 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-2xl transition-all"
+                                className="p-3 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-2xl transition-all"
                                 title="Copy"
                              >
                                <Copy className="w-5 h-5" />
@@ -531,7 +502,6 @@ const App: React.FC = () => {
                 )}
               </div>
             </div>
-
           </div>
         )}
       </main>
@@ -539,7 +509,7 @@ const App: React.FC = () => {
       <footer className="py-16 border-t border-slate-200 mt-24 bg-white">
         <div className="max-w-7xl mx-auto px-4 flex flex-col items-center">
           <div className="flex items-center space-x-2 mb-6">
-            <Palette className="w-6 h-6 text-indigo-600" />
+            <Palette className="w-6 h-6 text-blue-600" />
             <span className="text-slate-900 font-black uppercase tracking-widest text-lg">SVG Palette Pro</span>
           </div>
           <p className="text-slate-400 font-bold text-xs uppercase tracking-[0.3em]">&copy; {new Date().getFullYear()} — Built for Designers</p>

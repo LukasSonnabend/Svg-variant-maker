@@ -20,7 +20,6 @@ const ColorPicker: React.FC<ColorPickerProps> = ({ value, onChange, onRemove, sh
     { label: 'Analogous', colors: getHarmonyColors(value, 'analogous') }
   ];
 
-  // Close panel on click outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
@@ -38,7 +37,7 @@ const ColorPicker: React.FC<ColorPickerProps> = ({ value, onChange, onRemove, sh
   return (
     <div className="relative flex flex-col space-y-2 group/root" ref={containerRef}>
       <div className="flex items-center space-x-2">
-        <div className="relative w-8 h-8 rounded-lg border border-slate-300 overflow-hidden cursor-pointer shadow-sm flex-shrink-0 group hover:border-indigo-400 transition-colors">
+        <div className="relative w-8 h-8 rounded-lg border border-slate-300 overflow-hidden cursor-pointer shadow-sm flex-shrink-0 group hover:border-blue-400 transition-colors">
           <input
             type="color"
             value={value}
@@ -50,12 +49,12 @@ const ColorPicker: React.FC<ColorPickerProps> = ({ value, onChange, onRemove, sh
           type="text" 
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="text-[10px] font-mono w-16 px-1.5 py-1 rounded border border-slate-200 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none uppercase font-bold"
+          className="text-[10px] font-mono w-16 px-1.5 py-1 rounded border border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none uppercase font-bold text-slate-700"
         />
         
         <button
           onClick={() => setShowHarmony(!showHarmony)}
-          className={`p-1.5 rounded-lg transition-all ${showHarmony ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200' : 'text-slate-300 hover:text-indigo-600 hover:bg-indigo-50'}`}
+          className={`p-1.5 rounded-lg transition-all ${showHarmony ? 'bg-blue-600 text-white shadow-lg shadow-blue-200' : 'text-slate-300 hover:text-blue-600 hover:bg-blue-50'}`}
           title="Color Harmonies"
         >
           <Sparkles className="w-3.5 h-3.5" />
@@ -105,10 +104,6 @@ const ColorPicker: React.FC<ColorPickerProps> = ({ value, onChange, onRemove, sh
                 </div>
               </div>
             ))}
-          </div>
-          
-          <div className="mt-4 pt-3 border-t border-slate-50">
-            <p className="text-[8px] text-slate-400 font-medium italic text-center">Click a color to apply it</p>
           </div>
         </div>
       )}
