@@ -1,0 +1,5 @@
+{
+  "name": "SVG Palette Pro",
+  "description": "A high-performance tool for parsing SVGs, extracting unique color palettes, and generating all possible color variant combinations through Cartesian product mappings.",
+  "requestFramePermissions": []
+}
